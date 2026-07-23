@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@acaixinha/shared": "workspace:*",
+    "@aws-sdk/client-dynamodb": "^3.1094.0",
+    "@aws-sdk/lib-dynamodb": "^3.1094.0",
+    "@aws-sdk/util-dynamodb": "^3.996.7",
     "express": "^4.21.0",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.9.0"
