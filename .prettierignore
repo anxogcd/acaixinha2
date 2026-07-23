@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.pnpm-store/
+coverage/
+.turbo/
+.terraform/
+*.log

@@ -3,7 +3,9 @@
 Este documento define los principios de la **Arquitectura Hexagonal (Ports & Adapters)**, **CQRS (Command Query Responsibility Segregation)** y **DDD (Domain-Driven Design)** que deben seguirse en este ecosistema de desarrollo.
 
 ## Regla de Oro: Dependencias
+
 Las dependencias deben ir siempre hacia adentro, hacia el **Dominio**.
+
 1. **Dominio**: No depende de nada.
 2. **Aplicación**: Solo depende del Dominio.
 3. **Infraestructura**: Depende de Aplicación y Dominio.
@@ -13,7 +15,9 @@ Las dependencias deben ir siempre hacia adentro, hacia el **Dominio**.
 ## Capas y Responsabilidades
 
 ### 1. Capa de Dominio (`domain/`)
+
 Es el núcleo lógico del negocio. No conoce bases de datos, APIs ni frameworks.
+
 - **Aggregates/Entities**: Objetos con identidad propia que gestionan invariantes de negocio. Deben extender la clase base de agregados del sistema (ej. `AggregateRoot`).
 - **Value Objects (VOs)**: Objetos inmutables definidos por sus atributos (ej. `Email`, `Price`). Deben auto-validarse en su creación. Los VOs del mismo tipo primitivo deben usar **tipado nominal mediante branding** para que TypeScript impida intercambiarlos accidentalmente: una clase base genérica `StringVO<TBrand>` (o equivalente para otros primitivos) con un campo `declare private readonly _brand: TBrand` garantiza que dos VOs estructuralmente idénticos sean tipos distintos. El `declare` no emite código en runtime — coste cero.
 - **Domain Services**: Lógica de negocio que involucra múltiples entidades o que no tiene un lugar claro en un agregado.
@@ -22,22 +26,26 @@ Es el núcleo lógico del negocio. No conoce bases de datos, APIs ni frameworks.
 - **Domain Exceptions**: Errores semánticos de negocio (ej. `InsufficientFundsException`).
 
 ### 2. Capa de Aplicación (`application/`)
+
 Orquesta los casos de uso. Transforma datos de entrada en conceptos de dominio.
+
 - **Use Cases**: Implementan la interfaz `IUseCase`. Son los orquestadores principales.
 - **CQRS**:
-    - **Commands**: Intenciones de cambio de estado.
-    - **Queries**: Consultas de información (no deben mutar datos).
-    - **Handlers**: Capturan comandos/queries, inyectan dependencias y ejecutan casos de uso.
+  - **Commands**: Intenciones de cambio de estado.
+  - **Queries**: Consultas de información (no deben mutar datos).
+  - **Handlers**: Capturan comandos/queries, inyectan dependencias y ejecutan casos de uso.
 - **DTOs (Data Transfer Objects)**: Objetos simples para mover datos entre capas sin exponer el dominio.
 
 ### 3. Capa de Infraestructura (`infrastructure/`)
+
 Implementaciones técnicas y adaptadores.
+
 - **Persistence Adaptors**: Implementaciones de los repositorios (ej. Mikro-ORM, TypeORM, Prisma).
 - **Entry Points**: Controladores REST, Resolvers de GraphQL, Jobs de Cron o comandos de CLI.
 - **Mappers**: Transforman objetos entre capas:
-    - `Persistence -> Domain` (en repositorios).
-    - `Domain -> Persistence` (en repositorios).
-    - `Domain -> DTO/Response` (en la salida de la aplicación).
+  - `Persistence -> Domain` (en repositorios).
+  - `Domain -> Persistence` (en repositorios).
+  - `Domain -> DTO/Response` (en la salida de la aplicación).
 - **Providers/Modules**: Configuración del framework para el registro de dependencias.
 
 ---
@@ -70,21 +78,26 @@ src/<module-name>/
 ## Convenciones de Desarrollo
 
 ### 1. Inyección de Dependencias (DI)
+
 Para mantener el dominio puro, nunca inyectes una clase de infraestructura directamente. Usa interfaces y tokens:
+
 - **Puerto**: `interface IUserRepository` en `domain/`.
 - **Token**: `DITokenIUserRepository` en `domain/`.
 - **Adaptador**: `UserRepositoryImpl` en `infrastructure/`.
 
 ### 2. Manejo de Errores
+
 - El **Dominio** lanza excepciones de dominio.
 - La **Infraestructura** (ej. Global Filters) captura estas excepciones y las traduce a códigos de error HTTP/GraphQL adecuados.
 
 ### 3. Eventos de Dominio
+
 1. El Agregado registra el evento internamente (`record(event)`).
 2. El Repositorio guarda el estado.
 3. El Caso de Uso recupera los eventos del agregado y los publica en el `EventBus`.
 
 ### 4. Estrategia de Testing
+
 - **Unit Tests**: Para lógica de Dominio (Modelos y VOs) y Casos de Uso (usando mocks de repositorios).
 - **Integration Tests**: Para probar los Repositorios contra una base de datos real (o en memoria).
 - **E2E Tests**: Para probar el flujo completo desde el punto de entrada (API) hasta la base de datos.

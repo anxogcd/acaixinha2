@@ -1,0 +1,27 @@
+{
+  "name": "acaixinha",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm run --parallel --filter @acaixinha/api --filter @acaixinha/web dev",
+    "dev:api": "pnpm --filter @acaixinha/api dev",
+    "dev:web": "pnpm --filter @acaixinha/web dev",
+    "build": "pnpm --filter @acaixinha/shared build && pnpm run --parallel --filter @acaixinha/api --filter @acaixinha/web build",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3"
+  }
+}
