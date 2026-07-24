@@ -9,11 +9,11 @@ import type { AuthContext } from "../../../shared/infrastructure/auth/withAuth.j
 export class ListMemoriesHandler {
   constructor(@inject(GetUserMemoriesUseCase) private readonly useCase: GetUserMemoriesUseCase) {}
 
-  handle(_event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
+  handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     return new LambdaHandlerBuilder()
       .handle(async () => {
         const result = await this.useCase.execute(ctx.userId);
         return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      })(_event);
+      })(event);
   }
 }

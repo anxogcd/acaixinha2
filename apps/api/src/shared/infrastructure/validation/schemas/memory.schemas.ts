@@ -40,6 +40,6 @@ export const searchMemoriesSchema = z.object({
   tags: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  page: z.string().optional(),
-  limit: z.string().optional(),
+  page: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
 });

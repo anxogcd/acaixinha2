@@ -5,16 +5,19 @@ import { LambdaHandlerBuilder } from "../../../shared/infrastructure/delivery/Ba
 import { corsHeaders } from "../../../shared/infrastructure/delivery/cors.js";
 import type { AuthContext } from "../../../shared/infrastructure/auth/withAuth.js";
 
-interface GetUserParams {
-  userId: string;
-}
-
 @injectable()
 export class GetUserHandler {
   constructor(@inject(GetUserByIdUseCase) private readonly useCase: GetUserByIdUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    const { userId } = (event.pathParameters ?? {}) as unknown as GetUserParams;
+    const userId = event.pathParameters?.userId;
+    if (!userId) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: userId" }),
+      });
+    }
     return new LambdaHandlerBuilder()
       .handle(async () => {
         const result = await this.useCase.execute(userId);

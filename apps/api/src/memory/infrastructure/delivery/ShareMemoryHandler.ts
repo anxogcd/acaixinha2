@@ -12,7 +12,14 @@ export class ShareMemoryHandler {
   constructor(@inject(ShareMemoryUseCase) private readonly useCase: ShareMemoryUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    const memoryId = event.pathParameters?.memoryId ?? "";
+    const memoryId = event.pathParameters?.memoryId;
+    if (!memoryId) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+      });
+    }
     return new LambdaHandlerBuilder()
       .validate(shareMemorySchema)
       .handle(async (_event, parsed) => {

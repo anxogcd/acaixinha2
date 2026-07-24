@@ -10,7 +10,14 @@ export class DeleteMemoryHandler {
   constructor(@inject(DeleteMemoryUseCase) private readonly useCase: DeleteMemoryUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    const memoryId = event.pathParameters?.memoryId ?? "";
+    const memoryId = event.pathParameters?.memoryId;
+    if (!memoryId) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+      });
+    }
     return new LambdaHandlerBuilder()
       .handle(async () => {
         await this.useCase.execute(memoryId, ctx.userId);

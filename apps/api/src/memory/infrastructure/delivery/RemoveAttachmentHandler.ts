@@ -10,8 +10,22 @@ export class RemoveAttachmentHandler {
   constructor(@inject(RemoveAttachmentUseCase) private readonly useCase: RemoveAttachmentUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    const memoryId = event.pathParameters?.memoryId ?? "";
-    const attachmentId = event.pathParameters?.attachmentId ?? "";
+    const memoryId = event.pathParameters?.memoryId;
+    const attachmentId = event.pathParameters?.attachmentId;
+    if (!memoryId) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+      });
+    }
+    if (!attachmentId) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: attachmentId" }),
+      });
+    }
     return new LambdaHandlerBuilder()
       .handle(async () => {
         const result = await this.useCase.execute(memoryId, attachmentId, ctx.userId);
