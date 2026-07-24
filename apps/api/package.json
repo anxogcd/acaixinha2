@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/server/localServer.ts",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@acaixinha/shared": "workspace:*",
@@ -25,8 +28,10 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.162",
     "@types/express": "^5.0.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "aws-lambda": "^1.0.7",
     "tsx": "^4.19.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "^4.1.10"
   }
 }
