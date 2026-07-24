@@ -26,8 +26,6 @@ resource "aws_cognito_user_pool" "main" {
     required            = false
   }
 
-  alias_attributes = ["email", "preferred_username"]
-
   lambda_config {
     post_confirmation = var.post_confirmation_lambda_arn
   }

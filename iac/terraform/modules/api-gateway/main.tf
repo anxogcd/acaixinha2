@@ -87,24 +87,24 @@ resource "aws_api_gateway_resource" "attachment_confirm" {
 locals {
   methods = {
     # User endpoints
-    "POST /users"                         = { resource = aws_api_gateway_resource.users,               lambda = "createUser",        auth = false }
-    "GET /users/{userId}"                 = { resource = aws_api_gateway_resource.user_by_id,           lambda = "getUser",           auth = true }
-    "PATCH /users/{userId}"               = { resource = aws_api_gateway_resource.user_by_id,           lambda = "updateUserProfile", auth = true }
-    "DELETE /users/{userId}"              = { resource = aws_api_gateway_resource.user_by_id,           lambda = "deleteUser",        auth = true }
+    "POST /users"            = { resource = aws_api_gateway_resource.users, lambda = "createUser", auth = false }
+    "GET /users/{userId}"    = { resource = aws_api_gateway_resource.user_by_id, lambda = "getUser", auth = true }
+    "PATCH /users/{userId}"  = { resource = aws_api_gateway_resource.user_by_id, lambda = "updateUserProfile", auth = true }
+    "DELETE /users/{userId}" = { resource = aws_api_gateway_resource.user_by_id, lambda = "deleteUser", auth = true }
     # Memory endpoints
-    "POST /memories"                      = { resource = aws_api_gateway_resource.memories,             lambda = "createMemory",      auth = true }
-    "GET /memories"                       = { resource = aws_api_gateway_resource.memories,             lambda = "listMemories",      auth = true }
-    "GET /memories/search"                = { resource = aws_api_gateway_resource.memories_search,      lambda = "searchMemories",    auth = true }
-    "GET /memories/{memoryId}"            = { resource = aws_api_gateway_resource.memory_by_id,         lambda = "getMemory",         auth = true }
-    "PATCH /memories/{memoryId}"          = { resource = aws_api_gateway_resource.memory_by_id,         lambda = "updateMemory",      auth = true }
-    "DELETE /memories/{memoryId}"         = { resource = aws_api_gateway_resource.memory_by_id,         lambda = "deleteMemory",      auth = true }
-    "POST /memories/{memoryId}/share"     = { resource = aws_api_gateway_resource.memory_share,         lambda = "shareMemory",       auth = true }
-    "DELETE /memories/{memoryId}/share/{userId}" = { resource = aws_api_gateway_resource.memory_share_by_user, lambda = "unshareMemory", auth = true }
-    "POST /memories/{memoryId}/upload-url"       = { resource = aws_api_gateway_resource.memory_upload_url,   lambda = "generateUploadUrl", auth = true }
-    "POST /memories/{memoryId}/attachments"      = { resource = aws_api_gateway_resource.memory_attachments,  lambda = "addAttachment",    auth = true }
+    "POST /memories"                                                   = { resource = aws_api_gateway_resource.memories, lambda = "createMemory", auth = true }
+    "GET /memories"                                                    = { resource = aws_api_gateway_resource.memories, lambda = "listMemories", auth = true }
+    "GET /memories/search"                                             = { resource = aws_api_gateway_resource.memories_search, lambda = "searchMemories", auth = true }
+    "GET /memories/{memoryId}"                                         = { resource = aws_api_gateway_resource.memory_by_id, lambda = "getMemory", auth = true }
+    "PATCH /memories/{memoryId}"                                       = { resource = aws_api_gateway_resource.memory_by_id, lambda = "updateMemory", auth = true }
+    "DELETE /memories/{memoryId}"                                      = { resource = aws_api_gateway_resource.memory_by_id, lambda = "deleteMemory", auth = true }
+    "POST /memories/{memoryId}/share"                                  = { resource = aws_api_gateway_resource.memory_share, lambda = "shareMemory", auth = true }
+    "DELETE /memories/{memoryId}/share/{userId}"                       = { resource = aws_api_gateway_resource.memory_share_by_user, lambda = "unshareMemory", auth = true }
+    "POST /memories/{memoryId}/upload-url"                             = { resource = aws_api_gateway_resource.memory_upload_url, lambda = "generateUploadUrl", auth = true }
+    "POST /memories/{memoryId}/attachments"                            = { resource = aws_api_gateway_resource.memory_attachments, lambda = "addAttachment", auth = true }
     "GET /memories/{memoryId}/attachments/{attachmentId}/download-url" = { resource = aws_api_gateway_resource.attachment_download_url, lambda = "generateDownloadUrl", auth = true }
-    "POST /memories/{memoryId}/attachments/{attachmentId}/confirm"    = { resource = aws_api_gateway_resource.attachment_confirm,      lambda = "confirmAttachment",   auth = true }
-    "DELETE /memories/{memoryId}/attachments/{attachmentId}"          = { resource = aws_api_gateway_resource.attachment_by_id,        lambda = "removeAttachment",    auth = true }
+    "POST /memories/{memoryId}/attachments/{attachmentId}/confirm"     = { resource = aws_api_gateway_resource.attachment_confirm, lambda = "confirmAttachment", auth = true }
+    "DELETE /memories/{memoryId}/attachments/{attachmentId}"           = { resource = aws_api_gateway_resource.attachment_by_id, lambda = "removeAttachment", auth = true }
   }
 }
 

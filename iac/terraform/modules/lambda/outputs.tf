@@ -21,7 +21,7 @@ output "function_invoke_arns" {
 
 output "post_confirmation_arn" {
   description = "Post-confirmation Lambda ARN"
-  value       = aws_lambda_function.functions["postConfirmation"].arn
+  value       = aws_lambda_function.post_confirmation.arn
 }
 
 output "requires_auth" {

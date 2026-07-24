@@ -5,10 +5,10 @@ output "api_id" {
 
 output "api_url" {
   description = "API Gateway invoke URL"
-  value       = "${aws_api_gateway_deployment.main.invoke_url}${aws_api_gateway_stage.v1.stage_name}"
+  value       = aws_api_gateway_stage.v1.invoke_url
 }
 
 output "api_execution_arn" {
   description = "API Gateway execution ARN prefix"
-  value       = aws_api_gateway_deployment.main.execution_arn
+  value       = aws_api_gateway_rest_api.main.execution_arn
 }
