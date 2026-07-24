@@ -1,9 +1,9 @@
-export interface AttachmentDTO {
-  id: string;
-  memoryId: string;
-  filename: string;
-  url: string;
-  mimeType: string;
-  size: number;
-  createdAt: string;
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  attachmentId: string;
+  s3Key: string;
+}
+
+export interface DownloadUrlResponse {
+  downloadUrl: string;
 }

@@ -1,7 +1,9 @@
 export interface UserDTO {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  avatarUrl: string | null;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
