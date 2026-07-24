@@ -3,7 +3,7 @@ import { StringVO } from "@acaixinha/shared";
 const ALLOWED_MIME_TYPES = [/^image\//, /^video\//, /^audio\//, /^application\/pdf$/];
 
 export class MimeType extends StringVO<"MimeType"> {
-  static readonly config = { pattern: /.*/ };
+  static readonly _config = { pattern: /.*/ };
   declare readonly value: string;
 
   constructor(value: string) {
