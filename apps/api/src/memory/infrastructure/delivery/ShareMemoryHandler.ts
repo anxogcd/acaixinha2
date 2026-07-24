@@ -17,15 +17,16 @@ export class ShareMemoryHandler {
       return Promise.resolve({
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+        body: JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Missing path parameter: memoryId",
+        }),
       });
     }
-    return new LambdaHandlerBuilder()
-      .validate(shareMemorySchema)
-      .handle(async (_event, parsed) => {
-        const data = parsed as z.infer<typeof shareMemorySchema>;
-        const result = await this.useCase.execute(memoryId, ctx.userId, data.targetUserId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      })(event);
+    return new LambdaHandlerBuilder().validate(shareMemorySchema).handle(async (_event, parsed) => {
+      const data = parsed as z.infer<typeof shareMemorySchema>;
+      const result = await this.useCase.execute(memoryId, ctx.userId, data.targetUserId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    })(event);
   }
 }

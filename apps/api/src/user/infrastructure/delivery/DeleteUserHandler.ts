@@ -10,14 +10,13 @@ export class DeleteUserHandler {
   constructor(@inject(DeleteUserUseCase) private readonly useCase: DeleteUserUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        await this.useCase.execute(ctx.userId);
-        return {
-          statusCode: 204,
-          headers: corsHeaders,
-          body: "",
-        };
-      })(event);
+    return new LambdaHandlerBuilder().handle(async () => {
+      await this.useCase.execute(ctx.userId);
+      return {
+        statusCode: 204,
+        headers: corsHeaders,
+        body: "",
+      };
+    })(event);
   }
 }

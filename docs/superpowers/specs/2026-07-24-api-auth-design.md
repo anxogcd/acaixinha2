@@ -6,12 +6,12 @@ Implementar los entry points HTTP (Lambda handlers) para la API REST y la integr
 
 ## Decisiones de diseño
 
-| Decisión | Opción elegida |
-|----------|---------------|
+| Decisión           | Opción elegida                                                  |
+| ------------------ | --------------------------------------------------------------- |
 | Patrón de handlers | Lambda nativo: `APIGatewayProxyEvent` → `APIGatewayProxyResult` |
-| Autenticación | `aws-jwt-verify` (validación remota contra Cognito) |
-| DI | Container tsyringe mínimo (se refina en task 09) |
-| Event bus | `EventBridge` real con `@aws-sdk/client-eventbridge` |
+| Autenticación      | `aws-jwt-verify` (validación remota contra Cognito)             |
+| DI                 | Container tsyringe mínimo (se refina en task 09)                |
+| Event bus          | `EventBridge` real con `@aws-sdk/client-eventbridge`            |
 
 ## Estructura de archivos
 
@@ -86,10 +86,12 @@ API Gateway
 ## 1. Zod Schemas (`shared/infrastructure/validation/schemas/`)
 
 ### `user.schemas.ts`
+
 - `createUserSchema`: `id: uuid`, `name: 1-100 chars`, `username: /^@?[a-z0-9_]{3,30}$/`
 - `updateUserProfileSchema`: `name?`, `avatarUrl?`, `description?: max 500`
 
 ### `memory.schemas.ts`
+
 - `createMemorySchema`: `title: 1-200`, `description: 1-10000`, `memoryDate: ISO string`, `locationName?`, `coordinates?: {lat, lng}`, `tags?: string[]`
 - `updateMemorySchema`: todos los campos opcionales, al menos uno requerido (con `.refine()`)
 - `shareMemorySchema`: `targetUserId: uuid`
@@ -99,11 +101,13 @@ API Gateway
 ## 2. Auth Middleware (`shared/infrastructure/auth/`)
 
 ### `CognitoJwtVerifier.ts`
+
 - Singleton lazy-init usando `CognitoJwtVerifier.create()` de `aws-jwt-verify`.
 - Config: `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_TOKEN_USE = "id"`.
 - Expone `getVerifier(): CognitoJwtVerifier`.
 
 ### `withAuth.ts`
+
 - Tipos: `AuthContext = { userId: string; claims: { sub: string; username: string; email: string } }`.
 - `withAuth(handler: (event, ctx: AuthContext) => Promise<APIGatewayProxyResult>)`:
   - Extrae `Authorization` header (formato `Bearer <token>`). Si falta → 401.
@@ -115,67 +119,81 @@ API Gateway
 ## 3. BaseLambdaHandler + Error Mapping (`shared/infrastructure/delivery/`)
 
 ### `BaseLambdaHandler.ts`
+
 Builder pattern con tipado genérico:
+
 ```typescript
 class LambdaHandlerBuilder<T> {
   validate(schema: ZodSchema<T>): this;
-  handle(fn: (event: APIGatewayProxyEvent, parsed: T, ctx?: AuthContext) => Promise<APIGatewayProxyResult>): LambdaHandler;
+  handle(
+    fn: (
+      event: APIGatewayProxyEvent,
+      parsed: T,
+      ctx?: AuthContext,
+    ) => Promise<APIGatewayProxyResult>,
+  ): LambdaHandler;
 }
 ```
+
 Flujo:
+
 1. Parsea `body` (JSON.parse), `pathParameters`, `queryStringParameters` del evento.
 2. Construye objeto combinado y valida con Zod. 400 si falla.
 3. Ejecuta `fn`. Captura errores y mapea con `HttpErrorMapper`.
 4. Respuesta siempre incluye CORS headers.
 
 ### `HttpErrorMapper.ts`
+
 Mapea excepciones por su propiedad `code`:
-| Error code | HTTP |
-|-----------|------|
-| `USER_NOT_FOUND`, `MEMORY_NOT_FOUND` | 404 |
-| `USER_ALREADY_EXISTS` | 409 |
-| `UNAUTHORIZED_MEMORY_ACCESS` | 403 |
-| `INVALID_USERNAME`, `INVALID_COORDINATES`, `INVALID_TAG`, `ATTACHMENT_LIMIT_EXCEEDED` | 400 |
-| otros | 500 |
+
+| Error code                                                                            | HTTP |
+| ------------------------------------------------------------------------------------- | ---- |
+| `USER_NOT_FOUND`, `MEMORY_NOT_FOUND`                                                  | 404  |
+| `USER_ALREADY_EXISTS`                                                                 | 409  |
+| `UNAUTHORIZED_MEMORY_ACCESS`                                                          | 403  |
+| `INVALID_USERNAME`, `INVALID_COORDINATES`, `INVALID_TAG`, `ATTACHMENT_LIMIT_EXCEEDED` | 400  |
+| otros                                                                                 | 500  |
 
 También soporta fallback por `instanceof` (e.g., `MemoryNotFoundException` → 404).
 
 ### `cors.ts`
+
 Headers CORS constantes: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Headers: Content-Type,Authorization`, `Access-Control-Allow-Methods: GET,POST,PATCH,DELETE,OPTIONS`.
 
 ## 4. User Handlers (`user/infrastructure/delivery/`)
 
-| Handler | Método/Ruta | Auth | Usa |
-|---------|------------|------|-----|
-| `CreateUserHandler` | POST /users | No | `CreateUserUseCase` |
-| `GetUserHandler` | GET /users/{userId} | Sí | `GetUserByIdUseCase` |
-| `UpdateUserProfileHandler` | PATCH /users/{userId} | Sí | `UpdateUserProfileUseCase` |
-| `DeleteUserHandler` | DELETE /users/{userId} | Sí | `DeleteUserUseCase` |
+| Handler                    | Método/Ruta            | Auth | Usa                        |
+| -------------------------- | ---------------------- | ---- | -------------------------- |
+| `CreateUserHandler`        | POST /users            | No   | `CreateUserUseCase`        |
+| `GetUserHandler`           | GET /users/{userId}    | Sí   | `GetUserByIdUseCase`       |
+| `UpdateUserProfileHandler` | PATCH /users/{userId}  | Sí   | `UpdateUserProfileUseCase` |
+| `DeleteUserHandler`        | DELETE /users/{userId} | Sí   | `DeleteUserUseCase`        |
 
 Cada handler es una clase inyectable con tsyringe que recibe el use case en el constructor. El método `handle(event)` devuelve `Promise<APIGatewayProxyResult>`.
 
 ## 5. Memory Handlers (`memory/infrastructure/delivery/`)
 
-| Handler | Método/Ruta | Auth |
-|---------|------------|------|
-| `CreateMemoryHandler` | POST /memories | Sí |
-| `GetMemoryHandler` | GET /memories/{memoryId} | Sí |
-| `UpdateMemoryHandler` | PATCH /memories/{memoryId} | Sí |
-| `DeleteMemoryHandler` | DELETE /memories/{memoryId} | Sí |
-| `ListUserMemoriesHandler` | GET /memories | Sí |
-| `SearchMemoriesHandler` | GET /memories/search | Sí |
-| `ShareMemoryHandler` | POST /memories/{memoryId}/share | Sí |
-| `UnshareMemoryHandler` | DELETE /memories/{memoryId}/share/{userId} | Sí |
-| `AddAttachmentHandler` | POST /memories/{memoryId}/attachments | Sí |
-| `RemoveAttachmentHandler` | DELETE /memories/{memoryId}/attachments/{attachmentId} | Sí |
+| Handler                   | Método/Ruta                                            | Auth |
+| ------------------------- | ------------------------------------------------------ | ---- |
+| `CreateMemoryHandler`     | POST /memories                                         | Sí   |
+| `GetMemoryHandler`        | GET /memories/{memoryId}                               | Sí   |
+| `UpdateMemoryHandler`     | PATCH /memories/{memoryId}                             | Sí   |
+| `DeleteMemoryHandler`     | DELETE /memories/{memoryId}                            | Sí   |
+| `ListUserMemoriesHandler` | GET /memories                                          | Sí   |
+| `SearchMemoriesHandler`   | GET /memories/search                                   | Sí   |
+| `ShareMemoryHandler`      | POST /memories/{memoryId}/share                        | Sí   |
+| `UnshareMemoryHandler`    | DELETE /memories/{memoryId}/share/{userId}             | Sí   |
+| `AddAttachmentHandler`    | POST /memories/{memoryId}/attachments                  | Sí   |
+| `RemoveAttachmentHandler` | DELETE /memories/{memoryId}/attachments/{attachmentId} | Sí   |
 
 ## 6. Lambda Entry Points (`{module}/infrastructure/lambdas/`)
 
 Cada archivo exporta un `handler`:
+
 ```typescript
 export const handler = withAuth(
   // o sin withAuth si es público
-  container.resolve(SomeHandler).handle.bind(container.resolve(SomeHandler))
+  container.resolve(SomeHandler).handle.bind(container.resolve(SomeHandler)),
 );
 ```
 
@@ -184,6 +202,7 @@ Para `createUser` (sin auth) se omite `withAuth`.
 ## 7. Cognito Post-Confirmation Trigger (`auth/infrastructure/lambdas/postConfirmation.ts`)
 
 Trigger que Cognito invoca tras confirmación de registro:
+
 - Recibe `PostConfirmationTriggerEvent`.
 - Extrae `sub` (userId), `name` (`userName` o claim), `email` del evento.
 - Llama a `CreateUserUseCase.execute(sub, name, email)`.
@@ -226,16 +245,16 @@ Instalar con `pnpm add --filter @acaixinha/api zod aws-jwt-verify @aws-sdk/clien
 
 ## 11. Variables de entorno requeridas
 
-| Variable | Uso |
-|----------|-----|
-| `DYNAMODB_USERS_TABLE` | UserRepositoryImpl (ya usado) |
-| `DYNAMODB_MEMORIES_TABLE` | MemoryRepositoryImpl (ya usado) |
-| `DYNAMODB_MEMORY_SHARES_TABLE` | MemoryRepositoryImpl (ya usado) |
-| `COGNITO_USER_POOL_ID` | CognitoJwtVerifier |
-| `COGNITO_CLIENT_ID` | CognitoJwtVerifier |
-| `S3_BUCKET_NAME` | Memory handlers (task 08) |
-| `EVENT_BUS_NAME` | EventBridgeEventBus |
-| `AWS_REGION` | DynamoDB, EventBridge (default eu-west-1) |
+| Variable                       | Uso                                       |
+| ------------------------------ | ----------------------------------------- |
+| `DYNAMODB_USERS_TABLE`         | UserRepositoryImpl (ya usado)             |
+| `DYNAMODB_MEMORIES_TABLE`      | MemoryRepositoryImpl (ya usado)           |
+| `DYNAMODB_MEMORY_SHARES_TABLE` | MemoryRepositoryImpl (ya usado)           |
+| `COGNITO_USER_POOL_ID`         | CognitoJwtVerifier                        |
+| `COGNITO_CLIENT_ID`            | CognitoJwtVerifier                        |
+| `S3_BUCKET_NAME`               | Memory handlers (task 08)                 |
+| `EVENT_BUS_NAME`               | EventBridgeEventBus                       |
+| `AWS_REGION`                   | DynamoDB, EventBridge (default eu-west-1) |
 
 ## 12. Notas de implementación
 

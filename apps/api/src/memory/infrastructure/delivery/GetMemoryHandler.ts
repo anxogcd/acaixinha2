@@ -15,13 +15,15 @@ export class GetMemoryHandler {
       return Promise.resolve({
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+        body: JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Missing path parameter: memoryId",
+        }),
       });
     }
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(memoryId, ctx.userId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      })(event);
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(memoryId, ctx.userId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    })(event);
   }
 }

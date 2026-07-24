@@ -11,16 +11,14 @@ export class CreateUserHandler {
   constructor(@inject(CreateUserUseCase) private readonly useCase: CreateUserUseCase) {}
 
   handle(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-    return new LambdaHandlerBuilder()
-      .validate(createUserSchema)
-      .handle(async (_event, parsed) => {
-        const { id, name, username } = parsed as z.infer<typeof createUserSchema>;
-        const result = await this.useCase.execute(id, name, username);
-        return {
-          statusCode: 201,
-          headers: corsHeaders,
-          body: JSON.stringify(result),
-        };
-      })(event);
+    return new LambdaHandlerBuilder().validate(createUserSchema).handle(async (_event, parsed) => {
+      const { id, name, username } = parsed as z.infer<typeof createUserSchema>;
+      const result = await this.useCase.execute(id, name, username);
+      return {
+        statusCode: 201,
+        headers: corsHeaders,
+        body: JSON.stringify(result),
+      };
+    })(event);
   }
 }

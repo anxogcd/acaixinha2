@@ -17,7 +17,10 @@ export class AddAttachmentHandler {
       return Promise.resolve({
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+        body: JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Missing path parameter: memoryId",
+        }),
       });
     }
     return new LambdaHandlerBuilder()

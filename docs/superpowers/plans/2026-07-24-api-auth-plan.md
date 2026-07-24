@@ -22,6 +22,7 @@
 ### Task 1: Install dependencies
 
 **Files:**
+
 - Modify: `apps/api/package.json`
 
 - [ ] Run install
@@ -50,10 +51,12 @@ git commit -m "chore(api): add zod, aws-jwt-verify, @aws-sdk/client-eventbridge,
 ### Task 2: CORS helper + HttpErrorMapper
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/delivery/cors.ts`
 - Create: `apps/api/src/shared/infrastructure/delivery/HttpErrorMapper.ts`
 
 **Interfaces:**
+
 - Produces: `corsHeaders` (constant Record<string,string>), `mapErrorToHttpResponse(error: Error): APIGatewayProxyResult`
 
 - [ ] **Create `cors.ts`**
@@ -118,10 +121,12 @@ git commit -m "feat(api): add CORS headers and HTTP error mapper"
 ### Task 3: Zod validation schemas
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/validation/schemas/user.schemas.ts`
 - Create: `apps/api/src/shared/infrastructure/validation/schemas/memory.schemas.ts`
 
 **Interfaces:**
+
 - Produces: `createUserSchema`, `updateUserProfileSchema` (ZodObject)
 - Produces: `createMemorySchema`, `updateMemorySchema`, `shareMemorySchema`, `addAttachmentSchema`, `searchMemoriesSchema` (ZodObject)
 
@@ -159,19 +164,35 @@ export const createMemorySchema = z.object({
   memoryDate: z.string().datetime(),
   locationName: z.string().max(200).optional(),
   coordinates: coordinatesSchema.optional(),
-  tags: z.array(z.string().regex(/^[a-z0-9_-]+$/).max(50)).optional(),
+  tags: z
+    .array(
+      z
+        .string()
+        .regex(/^[a-z0-9_-]+$/)
+        .max(50),
+    )
+    .optional(),
 });
 
-export const updateMemorySchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().min(1).max(10000).optional(),
-  memoryDate: z.string().datetime().optional(),
-  locationName: z.string().max(200).nullable().optional(),
-  coordinates: coordinatesSchema.nullable().optional(),
-  tags: z.array(z.string().regex(/^[a-z0-9_-]+$/).max(50)).optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "At least one field must be provided",
-});
+export const updateMemorySchema = z
+  .object({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().min(1).max(10000).optional(),
+    memoryDate: z.string().datetime().optional(),
+    locationName: z.string().max(200).nullable().optional(),
+    coordinates: coordinatesSchema.nullable().optional(),
+    tags: z
+      .array(
+        z
+          .string()
+          .regex(/^[a-z0-9_-]+$/)
+          .max(50),
+      )
+      .optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided",
+  });
 
 export const shareMemorySchema = z.object({
   targetUserId: z.string().uuid(),
@@ -205,10 +226,12 @@ git commit -m "feat(api): add Zod validation schemas for user and memory"
 ### Task 4: Cognito JWT verifier + withAuth middleware
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/auth/CognitoJwtVerifier.ts`
 - Create: `apps/api/src/shared/infrastructure/auth/withAuth.ts`
 
 **Interfaces:**
+
 - Produces: `getVerifier(): CognitoJwtVerifier` (from aws-jwt-verify)
 - Produces: `withAuth(handler: (event: APIGatewayProxyEvent, ctx: AuthContext) => Promise<APIGatewayProxyResult>): (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>`
 - Produces: `AuthContext = { userId: string; claims: { sub: string; username: string; email: string } }`
@@ -329,9 +352,11 @@ git commit -m "feat(api): add Cognito JWT verifier and withAuth middleware"
 ### Task 5: BaseLambdaHandler builder
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/delivery/BaseLambdaHandler.ts`
 
 **Interfaces:**
+
 - Produces: `LambdaHandlerBuilder<T>` class with methods `validate(schema: ZodSchema<T>): this` and `handle(fn: ...)`
 - Produces: `parseEvent(event: APIGatewayProxyEvent)` helper
 - Produces: type `LambdaHandler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>`
@@ -437,9 +462,11 @@ git commit -m "feat(api): add BaseLambdaHandler builder with Zod validation and 
 ### Task 6: DI container
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/di/container.ts`
 
 **Interfaces:**
+
 - Produces: `container` (tsyringe container with all registrations)
 
 - [ ] **Create `container.ts`**
@@ -475,10 +502,12 @@ git commit -m "feat(api): add tsyringe DI container with all registrations"
 ### Task 7: EventBridge event bus + fix Memory domain errors
 
 **Files:**
+
 - Create: `apps/api/src/shared/infrastructure/events/EventBridgeEventBus.ts`
 - Modify: `apps/api/src/memory/domain/models/Memory.ts`
 
 **Interfaces:**
+
 - Produces: `EventBridgeEventBus implements IEventBus`
 - Consumes: `IEventBus` from `@acaixinha/shared`
 - Fix: `Memory.addAttachment()` and `Memory.removeAttachment()` and `Memory.delete()` throw domain exceptions instead of `Error`
@@ -523,54 +552,61 @@ export class EventBridgeEventBus implements IEventBus {
 In `apps/api/src/memory/domain/models/Memory.ts`:
 
 Replace lines 143-147 (`addAttachment` throw) from:
+
 ```typescript
-    if (this.attachments.length >= MAX_ATTACHMENTS_PER_MEMORY) {
-      throw new Error(
-        `Memory has reached the maximum of ${MAX_ATTACHMENTS_PER_MEMORY} attachments`,
-      );
-    }
+if (this.attachments.length >= MAX_ATTACHMENTS_PER_MEMORY) {
+  throw new Error(`Memory has reached the maximum of ${MAX_ATTACHMENTS_PER_MEMORY} attachments`);
+}
 ```
+
 To:
+
 ```typescript
-    if (this.attachments.length >= MAX_ATTACHMENTS_PER_MEMORY) {
-      throw new AttachmentLimitExceededException(this.id.value);
-    }
+if (this.attachments.length >= MAX_ATTACHMENTS_PER_MEMORY) {
+  throw new AttachmentLimitExceededException(this.id.value);
+}
 ```
 
 Add import at top:
+
 ```typescript
 import { AttachmentLimitExceededException } from "../exceptions/AttachmentLimitExceededException.js";
 ```
 
 Replace lines 159-168 (`removeAttachment` throw) from:
+
 ```typescript
-    if (
-      requestingUserId !== this.ownerId &&
-      !this.attachments.some(
-        (a) => a.id.equals(attachmentId) && a.uploadedByUserId === requestingUserId,
-      )
-    ) {
-      throw new Error("Only the memory owner or the attachment uploader can remove it");
-    }
+if (
+  requestingUserId !== this.ownerId &&
+  !this.attachments.some(
+    (a) => a.id.equals(attachmentId) && a.uploadedByUserId === requestingUserId,
+  )
+) {
+  throw new Error("Only the memory owner or the attachment uploader can remove it");
+}
 ```
+
 To:
+
 ```typescript
-    if (
-      requestingUserId !== this.ownerId &&
-      !this.attachments.some(
-        (a) => a.id.equals(attachmentId) && a.uploadedByUserId === requestingUserId,
-      )
-    ) {
-      throw new UnauthorizedMemoryAccessException(this.id.value, requestingUserId);
-    }
+if (
+  requestingUserId !== this.ownerId &&
+  !this.attachments.some(
+    (a) => a.id.equals(attachmentId) && a.uploadedByUserId === requestingUserId,
+  )
+) {
+  throw new UnauthorizedMemoryAccessException(this.id.value, requestingUserId);
+}
 ```
 
 Add import at top:
+
 ```typescript
 import { UnauthorizedMemoryAccessException } from "../exceptions/UnauthorizedMemoryAccessException.js";
 ```
 
 Replace lines 184-194 (`delete` throw) from:
+
 ```typescript
   delete(requestingUserId: string): void {
     if (!this.isOwner(requestingUserId)) {
@@ -584,7 +620,9 @@ Replace lines 184-194 (`delete` throw) from:
     );
   }
 ```
+
 To:
+
 ```typescript
   delete(requestingUserId: string): void {
     if (!this.isOwner(requestingUserId)) {
@@ -611,11 +649,13 @@ git commit -m "feat(api): add EventBridge event bus and fix Memory domain errors
 ### Task 8: Missing use case wrappers
 
 **Files:**
+
 - Create: `apps/api/src/memory/application/use-cases/GetMemoryUseCase.ts`
 - Create: `apps/api/src/memory/application/use-cases/GetUserMemoriesUseCase.ts`
 - Create: `apps/api/src/memory/application/use-cases/UnshareMemoryUseCase.ts`
 
 **Interfaces:**
+
 - Produces: `GetMemoryUseCase.execute(memoryId: string, requestingUserId: string): Promise<MemoryResponseDTO>`
 - Produces: `GetUserMemoriesUseCase.execute(userId: string): Promise<MemoryResponseDTO[]>`
 - Produces: `UnshareMemoryUseCase.execute(memoryId: string, requestingUserId: string, targetUserId: string): Promise<MemoryResponseDTO>`
@@ -701,12 +741,14 @@ git commit -m "feat(api): add missing use case wrappers for GetMemory, GetUserMe
 ### Task 9: User HTTP handlers
 
 **Files:**
+
 - Create: `apps/api/src/user/infrastructure/delivery/CreateUserHandler.ts`
 - Create: `apps/api/src/user/infrastructure/delivery/GetUserHandler.ts`
 - Create: `apps/api/src/user/infrastructure/delivery/UpdateUserProfileHandler.ts`
 - Create: `apps/api/src/user/infrastructure/delivery/DeleteUserHandler.ts`
 
 **Interfaces:**
+
 - Produces: each class has `handle(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>`
 - Consumes: `CreateUserUseCase`, `GetUserByIdUseCase`, `UpdateUserProfileUseCase`, `DeleteUserUseCase`
 - Consumes: `LambdaHandlerBuilder`, `AuthContext` from shared infrastructure
@@ -726,16 +768,14 @@ export class CreateUserHandler {
   constructor(@inject(CreateUserUseCase) private readonly useCase: CreateUserUseCase) {}
 
   handle(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-    return new LambdaHandlerBuilder()
-      .validate(createUserSchema)
-      .handle(async (_event, parsed) => {
-        const result = await this.useCase.execute(parsed.id, parsed.name, parsed.username);
-        return {
-          statusCode: 201,
-          headers: corsHeaders,
-          body: JSON.stringify(result),
-        };
-      });
+    return new LambdaHandlerBuilder().validate(createUserSchema).handle(async (_event, parsed) => {
+      const result = await this.useCase.execute(parsed.id, parsed.name, parsed.username);
+      return {
+        statusCode: 201,
+        headers: corsHeaders,
+        body: JSON.stringify(result),
+      };
+    });
   }
 }
 ```
@@ -760,15 +800,14 @@ export class GetUserHandler {
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const { userId } = (event.pathParameters ?? {}) as unknown as GetUserParams;
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(userId);
-        return {
-          statusCode: 200,
-          headers: corsHeaders,
-          body: JSON.stringify(result),
-        };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(userId);
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify(result),
+      };
+    });
   }
 }
 ```
@@ -790,7 +829,9 @@ interface UpdateUserProfileParams {
 
 @injectable()
 export class UpdateUserProfileHandler {
-  constructor(@inject(UpdateUserProfileUseCase) private readonly useCase: UpdateUserProfileUseCase) {}
+  constructor(
+    @inject(UpdateUserProfileUseCase) private readonly useCase: UpdateUserProfileUseCase,
+  ) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     return new LambdaHandlerBuilder()
@@ -827,15 +868,14 @@ export class DeleteUserHandler {
   constructor(@inject(DeleteUserUseCase) private readonly useCase: DeleteUserUseCase) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        await this.useCase.execute(ctx.userId);
-        return {
-          statusCode: 204,
-          headers: corsHeaders,
-          body: "",
-        };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      await this.useCase.execute(ctx.userId);
+      return {
+        statusCode: 204,
+        headers: corsHeaders,
+        body: "",
+      };
+    });
   }
 }
 ```
@@ -852,12 +892,14 @@ git commit -m "feat(api): add User HTTP handlers (create, get, update, delete)"
 ### Task 10: User Lambda entry points
 
 **Files:**
+
 - Create: `apps/api/src/user/infrastructure/lambdas/createUser.ts`
 - Create: `apps/api/src/user/infrastructure/lambdas/getUser.ts`
 - Create: `apps/api/src/user/infrastructure/lambdas/updateUserProfile.ts`
 - Create: `apps/api/src/user/infrastructure/lambdas/deleteUser.ts`
 
 **Interfaces:**
+
 - Produces: each exports `export const handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>`
 - Consumes: `container`, `withAuth`, user handlers
 
@@ -918,6 +960,7 @@ git commit -m "feat(api): add User Lambda entry points"
 ### Task 11: Memory HTTP handlers
 
 **Files:**
+
 - Create: `apps/api/src/memory/infrastructure/delivery/CreateMemoryHandler.ts`
 - Create: `apps/api/src/memory/infrastructure/delivery/GetMemoryHandler.ts`
 - Create: `apps/api/src/memory/infrastructure/delivery/UpdateMemoryHandler.ts`
@@ -930,6 +973,7 @@ git commit -m "feat(api): add User Lambda entry points"
 - Create: `apps/api/src/memory/infrastructure/delivery/RemoveAttachmentHandler.ts`
 
 **Interfaces:**
+
 - Produces: each class has `handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult>`
 - Consumes: memory use cases, `LambdaHandlerBuilder`, schemas, `corsHeaders`
 
@@ -985,11 +1029,10 @@ export class GetMemoryHandler {
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const memoryId = event.pathParameters?.memoryId ?? "";
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(memoryId, ctx.userId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(memoryId, ctx.userId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    });
   }
 }
 ```
@@ -1023,7 +1066,9 @@ export class UpdateMemoryHandler {
           parsed.locationName ?? undefined,
           parsed.coordinates
             ? { latitude: parsed.coordinates.lat, longitude: parsed.coordinates.lng }
-            : (parsed.coordinates === null ? undefined : undefined),
+            : parsed.coordinates === null
+              ? undefined
+              : undefined,
           parsed.tags,
         );
         return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
@@ -1048,11 +1093,10 @@ export class DeleteMemoryHandler {
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const memoryId = event.pathParameters?.memoryId ?? "";
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        await this.useCase.execute(memoryId, ctx.userId);
-        return { statusCode: 204, headers: corsHeaders, body: "" };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      await this.useCase.execute(memoryId, ctx.userId);
+      return { statusCode: 204, headers: corsHeaders, body: "" };
+    });
   }
 }
 ```
@@ -1072,11 +1116,10 @@ export class ListMemoriesHandler {
   constructor(@inject(GetUserMemoriesUseCase) private readonly useCase: GetUserMemoriesUseCase) {}
 
   handle(_event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(ctx.userId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(ctx.userId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    });
   }
 }
 ```
@@ -1133,12 +1176,10 @@ export class ShareMemoryHandler {
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const memoryId = event.pathParameters?.memoryId ?? "";
-    return new LambdaHandlerBuilder()
-      .validate(shareMemorySchema)
-      .handle(async (_event, parsed) => {
-        const result = await this.useCase.execute(memoryId, ctx.userId, parsed.targetUserId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      });
+    return new LambdaHandlerBuilder().validate(shareMemorySchema).handle(async (_event, parsed) => {
+      const result = await this.useCase.execute(memoryId, ctx.userId, parsed.targetUserId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    });
   }
 }
 ```
@@ -1160,11 +1201,10 @@ export class UnshareMemoryHandler {
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const memoryId = event.pathParameters?.memoryId ?? "";
     const targetUserId = event.pathParameters?.userId ?? "";
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(memoryId, ctx.userId, targetUserId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(memoryId, ctx.userId, targetUserId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    });
   }
 }
 ```
@@ -1219,11 +1259,10 @@ export class RemoveAttachmentHandler {
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     const memoryId = event.pathParameters?.memoryId ?? "";
     const attachmentId = event.pathParameters?.attachmentId ?? "";
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(memoryId, attachmentId, ctx.userId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      });
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(memoryId, attachmentId, ctx.userId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    });
   }
 }
 ```
@@ -1240,6 +1279,7 @@ git commit -m "feat(api): add Memory HTTP handlers (create, get, update, delete,
 ### Task 12: Memory Lambda entry points
 
 **Files:**
+
 - Create: `apps/api/src/memory/infrastructure/lambdas/createMemory.ts`
 - Create: `apps/api/src/memory/infrastructure/lambdas/getMemory.ts`
 - Create: `apps/api/src/memory/infrastructure/lambdas/updateMemory.ts`
@@ -1254,6 +1294,7 @@ git commit -m "feat(api): add Memory HTTP handlers (create, get, update, delete,
 - [ ] **Create all 10 Lambda entry points** — each follows the same pattern as Task 10 but for memory handlers. All use `withAuth`.
 
 **`createMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1264,6 +1305,7 @@ export const handler = withAuth(createMemoryHandler.handle.bind(createMemoryHand
 ```
 
 **`getMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1274,6 +1316,7 @@ export const handler = withAuth(getMemoryHandler.handle.bind(getMemoryHandler));
 ```
 
 **`updateMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1284,6 +1327,7 @@ export const handler = withAuth(updateMemoryHandler.handle.bind(updateMemoryHand
 ```
 
 **`deleteMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1294,6 +1338,7 @@ export const handler = withAuth(deleteMemoryHandler.handle.bind(deleteMemoryHand
 ```
 
 **`listMemories.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1304,6 +1349,7 @@ export const handler = withAuth(listMemoriesHandler.handle.bind(listMemoriesHand
 ```
 
 **`searchMemories.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1314,6 +1360,7 @@ export const handler = withAuth(searchMemoriesHandler.handle.bind(searchMemories
 ```
 
 **`shareMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1324,6 +1371,7 @@ export const handler = withAuth(shareMemoryHandler.handle.bind(shareMemoryHandle
 ```
 
 **`unshareMemory.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1334,6 +1382,7 @@ export const handler = withAuth(unshareMemoryHandler.handle.bind(unshareMemoryHa
 ```
 
 **`addAttachment.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1344,6 +1393,7 @@ export const handler = withAuth(addAttachmentHandler.handle.bind(addAttachmentHa
 ```
 
 **`removeAttachment.ts`:**
+
 ```typescript
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { withAuth } from "../../../shared/infrastructure/auth/withAuth.js";
@@ -1365,9 +1415,11 @@ git commit -m "feat(api): add Memory Lambda entry points"
 ### Task 13: Cognito Post-Confirmation trigger
 
 **Files:**
+
 - Create: `apps/api/src/auth/infrastructure/lambdas/postConfirmation.ts`
 
 **Interfaces:**
+
 - Produces: `handler(event: PostConfirmationTriggerEvent): Promise<PostConfirmationTriggerEvent>`
 - Consumes: `CreateUserUseCase`, `container`
 
@@ -1378,7 +1430,9 @@ import type { PostConfirmationTriggerEvent } from "aws-lambda";
 import { container } from "../../../shared/infrastructure/di/container.js";
 import { CreateUserUseCase } from "../../../user/application/use-cases/CreateUserUseCase.js";
 
-export async function handler(event: PostConfirmationTriggerEvent): Promise<PostConfirmationTriggerEvent> {
+export async function handler(
+  event: PostConfirmationTriggerEvent,
+): Promise<PostConfirmationTriggerEvent> {
   const useCase = container.resolve(CreateUserUseCase);
 
   try {
@@ -1388,10 +1442,7 @@ export async function handler(event: PostConfirmationTriggerEvent): Promise<Post
 
     await useCase.execute(sub, name, email);
   } catch (err) {
-    if (
-      err instanceof Error &&
-      (err as { code?: string }).code === "USER_ALREADY_EXISTS"
-    ) {
+    if (err instanceof Error && (err as { code?: string }).code === "USER_ALREADY_EXISTS") {
       // User already exists — idempotent, do nothing
       console.log("User already exists, skipping creation");
     } else {
@@ -1415,9 +1466,11 @@ git commit -m "feat(api): add Cognito Post-Confirmation trigger Lambda"
 ### Task 14: Update localServer for dev mode
 
 **Files:**
+
 - Modify: `apps/api/src/server/localServer.ts`
 
 **Interfaces:**
+
 - Produces: `localServer.ts` registers all Lambda handlers as Express routes for local development
 
 - [ ] **Update `localServer.ts`**
@@ -1467,12 +1520,13 @@ function toLambdaEvent(req: express.Request): APIGatewayProxyEvent {
             {} as Record<string, string | undefined>,
           )
         : null,
-    pathParameters: req.params && Object.keys(req.params).length > 0
-      ? Object.entries(req.params).reduce(
-          (acc, [k, v]) => ({ ...acc, [k]: String(v) }),
-          {} as Record<string, string>,
-        )
-      : null,
+    pathParameters:
+      req.params && Object.keys(req.params).length > 0
+        ? Object.entries(req.params).reduce(
+            (acc, [k, v]) => ({ ...acc, [k]: String(v) }),
+            {} as Record<string, string>,
+          )
+        : null,
     body: req.body ? JSON.stringify(req.body) : null,
     isBase64Encoded: false,
     resource: req.route?.path ?? req.path,
@@ -1503,7 +1557,9 @@ function wrapHandler(handler: LambdaHandler): express.RequestHandler {
 
 // Dev auth middleware: injects a fake user ID from Authorization header
 // In production, Cognito handles this. For local dev, pass userId as Bearer token.
-function devAuth(handler: (req: express.Request, res: express.Response, ctx: AuthContext) => void): express.RequestHandler {
+function devAuth(
+  handler: (req: express.Request, res: express.Response, ctx: AuthContext) => void,
+): express.RequestHandler {
   return (req, res) => {
     const authHeader = req.headers.authorization;
     let userId = "dev-user";
@@ -1527,174 +1583,252 @@ export function registerRoutes(app: express.Application): void {
   app.post("/users", wrapHandler(createUserHandler.handle.bind(createUserHandler)));
 
   const getUserHandler = container.resolve(GetUserHandler);
-  app.get("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    getUserHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      getUserHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const updateUserProfileHandler = container.resolve(UpdateUserProfileHandler);
-  app.patch("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    updateUserProfileHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.patch(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      updateUserProfileHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const deleteUserHandler = container.resolve(DeleteUserHandler);
-  app.delete("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    deleteUserHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      deleteUserHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   // Memory routes
   const createMemoryHandler = container.resolve(CreateMemoryHandler);
-  app.post("/memories", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    createMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      createMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const getMemoryHandler = container.resolve(GetMemoryHandler);
-  app.get("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    getMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      getMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const updateMemoryHandler = container.resolve(UpdateMemoryHandler);
-  app.patch("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    updateMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.patch(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      updateMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const deleteMemoryHandler = container.resolve(DeleteMemoryHandler);
-  app.delete("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    deleteMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      deleteMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const listMemoriesHandler = container.resolve(ListMemoriesHandler);
-  app.get("/memories", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    listMemoriesHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      listMemoriesHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const searchMemoriesHandler = container.resolve(SearchMemoriesHandler);
-  app.get("/memories/search", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    searchMemoriesHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories/search",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      searchMemoriesHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const shareMemoryHandler = container.resolve(ShareMemoryHandler);
-  app.post("/memories/:memoryId/share", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    shareMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories/:memoryId/share",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      shareMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const unshareMemoryHandler = container.resolve(UnshareMemoryHandler);
-  app.delete("/memories/:memoryId/share/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    unshareMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId/share/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      unshareMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const addAttachmentHandler = container.resolve(AddAttachmentHandler);
-  app.post("/memories/:memoryId/attachments", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    addAttachmentHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories/:memoryId/attachments",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      addAttachmentHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const removeAttachmentHandler = container.resolve(RemoveAttachmentHandler);
-  app.delete("/memories/:memoryId/attachments/:attachmentId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    removeAttachmentHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId/attachments/:attachmentId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      removeAttachmentHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 }
 
 function main(): void {

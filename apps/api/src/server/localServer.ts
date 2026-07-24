@@ -20,6 +20,9 @@ import { ShareMemoryHandler } from "../memory/infrastructure/delivery/ShareMemor
 import { UnshareMemoryHandler } from "../memory/infrastructure/delivery/UnshareMemoryHandler.js";
 import { AddAttachmentHandler } from "../memory/infrastructure/delivery/AddAttachmentHandler.js";
 import { RemoveAttachmentHandler } from "../memory/infrastructure/delivery/RemoveAttachmentHandler.js";
+import { GenerateUploadUrlHandler } from "../memory/infrastructure/delivery/GenerateUploadUrlHandler.js";
+import { GenerateDownloadUrlHandler } from "../memory/infrastructure/delivery/GenerateDownloadUrlHandler.js";
+import { ConfirmAttachmentHandler } from "../memory/infrastructure/delivery/ConfirmAttachmentHandler.js";
 
 // Auth middleware
 import type { AuthContext } from "../shared/infrastructure/auth/withAuth.js";
@@ -41,12 +44,13 @@ function toLambdaEvent(req: express.Request): APIGatewayProxyEvent {
             {} as Record<string, string | undefined>,
           )
         : null,
-    pathParameters: req.params && Object.keys(req.params).length > 0
-      ? Object.entries(req.params).reduce(
-          (acc, [k, v]) => ({ ...acc, [k]: String(v) }),
-          {} as Record<string, string>,
-        )
-      : null,
+    pathParameters:
+      req.params && Object.keys(req.params).length > 0
+        ? Object.entries(req.params).reduce(
+            (acc, [k, v]) => ({ ...acc, [k]: String(v) }),
+            {} as Record<string, string>,
+          )
+        : null,
     body: req.body ? JSON.stringify(req.body) : null,
     isBase64Encoded: false,
     resource: req.route?.path ?? req.path,
@@ -77,7 +81,9 @@ function wrapHandler(handler: LambdaHandler): express.RequestHandler {
 
 // Dev auth middleware: injects a fake user ID from Authorization header
 // In production, Cognito handles this. For local dev, pass userId as Bearer token.
-function devAuth(handler: (req: express.Request, res: express.Response, ctx: AuthContext) => void): express.RequestHandler {
+function devAuth(
+  handler: (req: express.Request, res: express.Response, ctx: AuthContext) => void,
+): express.RequestHandler {
   return (req, res) => {
     const authHeader = req.headers.authorization;
     let userId = "dev-user";
@@ -101,174 +107,309 @@ export function registerRoutes(app: express.Application): void {
   app.post("/users", wrapHandler(createUserHandler.handle.bind(createUserHandler)));
 
   const getUserHandler = container.resolve(GetUserHandler);
-  app.get("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    getUserHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      getUserHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const updateUserProfileHandler = container.resolve(UpdateUserProfileHandler);
-  app.patch("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    updateUserProfileHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.patch(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      updateUserProfileHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const deleteUserHandler = container.resolve(DeleteUserHandler);
-  app.delete("/users/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    deleteUserHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/users/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      deleteUserHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   // Memory routes
   const createMemoryHandler = container.resolve(CreateMemoryHandler);
-  app.post("/memories", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    createMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      createMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const getMemoryHandler = container.resolve(GetMemoryHandler);
-  app.get("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    getMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      getMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const updateMemoryHandler = container.resolve(UpdateMemoryHandler);
-  app.patch("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    updateMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.patch(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      updateMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const deleteMemoryHandler = container.resolve(DeleteMemoryHandler);
-  app.delete("/memories/:memoryId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    deleteMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      deleteMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const listMemoriesHandler = container.resolve(ListMemoriesHandler);
-  app.get("/memories", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    listMemoriesHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      listMemoriesHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const searchMemoriesHandler = container.resolve(SearchMemoriesHandler);
-  app.get("/memories/search", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    searchMemoriesHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.get(
+    "/memories/search",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      searchMemoriesHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const shareMemoryHandler = container.resolve(ShareMemoryHandler);
-  app.post("/memories/:memoryId/share", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    shareMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories/:memoryId/share",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      shareMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const unshareMemoryHandler = container.resolve(UnshareMemoryHandler);
-  app.delete("/memories/:memoryId/share/:userId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    unshareMemoryHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId/share/:userId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      unshareMemoryHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const addAttachmentHandler = container.resolve(AddAttachmentHandler);
-  app.post("/memories/:memoryId/attachments", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    addAttachmentHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.post(
+    "/memories/:memoryId/attachments",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      addAttachmentHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 
   const removeAttachmentHandler = container.resolve(RemoveAttachmentHandler);
-  app.delete("/memories/:memoryId/attachments/:attachmentId", devAuth((req, res, ctx) => {
-    const event = toLambdaEvent(req);
-    removeAttachmentHandler.handle(event, ctx).then((result) => {
-      res.status(result.statusCode).set(result.headers);
-      if (result.body) res.json(JSON.parse(result.body));
-      else res.end();
-    }).catch((err) => {
-      console.error("Handler error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    });
-  }));
+  app.delete(
+    "/memories/:memoryId/attachments/:attachmentId",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      removeAttachmentHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
+
+  const generateUploadUrlHandler = container.resolve(GenerateUploadUrlHandler);
+  app.post(
+    "/memories/:memoryId/upload-url",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      generateUploadUrlHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
+
+  const generateDownloadUrlHandler = container.resolve(GenerateDownloadUrlHandler);
+  app.get(
+    "/memories/:memoryId/attachments/:attachmentId/download-url",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      generateDownloadUrlHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
+
+  const confirmAttachmentHandler = container.resolve(ConfirmAttachmentHandler);
+  app.post(
+    "/memories/:memoryId/attachments/:attachmentId/confirm",
+    devAuth((req, res, ctx) => {
+      const event = toLambdaEvent(req);
+      confirmAttachmentHandler
+        .handle(event, ctx)
+        .then((result) => {
+          res.status(result.statusCode).set(result.headers);
+          if (result.body) res.json(JSON.parse(result.body));
+          else res.end();
+        })
+        .catch((err) => {
+          console.error("Handler error:", err);
+          res.status(500).json({ error: "Internal server error" });
+        });
+    }),
+  );
 }
 
 function main(): void {

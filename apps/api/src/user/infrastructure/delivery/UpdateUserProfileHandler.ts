@@ -9,19 +9,16 @@ import type { AuthContext } from "../../../shared/infrastructure/auth/withAuth.j
 
 @injectable()
 export class UpdateUserProfileHandler {
-  constructor(@inject(UpdateUserProfileUseCase) private readonly useCase: UpdateUserProfileUseCase) {}
+  constructor(
+    @inject(UpdateUserProfileUseCase) private readonly useCase: UpdateUserProfileUseCase,
+  ) {}
 
   handle(event: APIGatewayProxyEvent, ctx: AuthContext): Promise<APIGatewayProxyResult> {
     return new LambdaHandlerBuilder()
       .validate(updateUserProfileSchema)
       .handle(async (_event, parsed) => {
         const { name, avatarUrl, description } = parsed as z.infer<typeof updateUserProfileSchema>;
-        const result = await this.useCase.execute(
-          ctx.userId,
-          name,
-          avatarUrl,
-          description,
-        );
+        const result = await this.useCase.execute(ctx.userId, name, avatarUrl, description);
         return {
           statusCode: 200,
           headers: corsHeaders,

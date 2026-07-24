@@ -11,19 +11,35 @@ export const createMemorySchema = z.object({
   memoryDate: z.string().datetime(),
   locationName: z.string().max(200).optional(),
   coordinates: coordinatesSchema.optional(),
-  tags: z.array(z.string().regex(/^[a-z0-9_-]+$/).max(50)).optional(),
+  tags: z
+    .array(
+      z
+        .string()
+        .regex(/^[a-z0-9_-]+$/)
+        .max(50),
+    )
+    .optional(),
 });
 
-export const updateMemorySchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().min(1).max(10000).optional(),
-  memoryDate: z.string().datetime().optional(),
-  locationName: z.string().max(200).nullable().optional(),
-  coordinates: coordinatesSchema.nullable().optional(),
-  tags: z.array(z.string().regex(/^[a-z0-9_-]+$/).max(50)).optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "At least one field must be provided",
-});
+export const updateMemorySchema = z
+  .object({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().min(1).max(10000).optional(),
+    memoryDate: z.string().datetime().optional(),
+    locationName: z.string().max(200).nullable().optional(),
+    coordinates: coordinatesSchema.nullable().optional(),
+    tags: z
+      .array(
+        z
+          .string()
+          .regex(/^[a-z0-9_-]+$/)
+          .max(50),
+      )
+      .optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided",
+  });
 
 export const shareMemorySchema = z.object({
   targetUserId: z.string().uuid(),
@@ -42,4 +58,13 @@ export const searchMemoriesSchema = z.object({
   dateTo: z.string().optional(),
   page: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
+});
+
+export const generateUploadUrlSchema = z.object({
+  mimeType: z.string().min(1),
+});
+
+export const confirmAttachmentSchema = z.object({
+  mimeType: z.string().min(1),
+  description: z.string().max(500).optional(),
 });

@@ -16,20 +16,25 @@ export class UnshareMemoryHandler {
       return Promise.resolve({
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: memoryId" }),
+        body: JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Missing path parameter: memoryId",
+        }),
       });
     }
     if (!targetUserId) {
       return Promise.resolve({
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ code: "VALIDATION_ERROR", message: "Missing path parameter: userId" }),
+        body: JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Missing path parameter: userId",
+        }),
       });
     }
-    return new LambdaHandlerBuilder()
-      .handle(async () => {
-        const result = await this.useCase.execute(memoryId, ctx.userId, targetUserId);
-        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-      })(event);
+    return new LambdaHandlerBuilder().handle(async () => {
+      const result = await this.useCase.execute(memoryId, ctx.userId, targetUserId);
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+    })(event);
   }
 }
