@@ -1,0 +1,4 @@
+aws_region            = "eu-west-1"
+cognito_domain_prefix = "acaixinha-dev"
+cognito_callback_url  = "http://localhost:5173/callback"
+cognito_logout_url    = "http://localhost:5173"
