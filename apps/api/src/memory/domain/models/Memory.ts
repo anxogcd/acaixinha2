@@ -12,6 +12,8 @@ import { MemoryUpdatedEvent } from "../events/MemoryUpdatedEvent.js";
 import { MemoryDeletedEvent } from "../events/MemoryDeletedEvent.js";
 import { MemorySharedEvent } from "../events/MemorySharedEvent.js";
 import { AttachmentAddedEvent } from "../events/AttachmentAddedEvent.js";
+import { AttachmentLimitExceededException } from "../exceptions/AttachmentLimitExceededException.js";
+import { UnauthorizedMemoryAccessException } from "../exceptions/UnauthorizedMemoryAccessException.js";
 import { MAX_ATTACHMENTS_PER_MEMORY } from "../constants/index.js";
 
 interface CreateMemoryProps {
@@ -141,9 +143,7 @@ export class Memory extends AggregateRoot<MemoryId> {
 
   addAttachment(attachment: Attachment): void {
     if (this.attachments.length >= MAX_ATTACHMENTS_PER_MEMORY) {
-      throw new Error(
-        `Memory has reached the maximum of ${MAX_ATTACHMENTS_PER_MEMORY} attachments`,
-      );
+      throw new AttachmentLimitExceededException(this.id.value);
     }
     this.attachments.push(attachment);
     this.touch();
@@ -163,7 +163,7 @@ export class Memory extends AggregateRoot<MemoryId> {
         (a) => a.id.equals(attachmentId) && a.uploadedByUserId === requestingUserId,
       )
     ) {
-      throw new Error("Only the memory owner or the attachment uploader can remove it");
+      throw new UnauthorizedMemoryAccessException(this.id.value, requestingUserId);
     }
     this.attachments = this.attachments.filter((a) => !a.id.equals(attachmentId));
     this.touch();
@@ -183,7 +183,7 @@ export class Memory extends AggregateRoot<MemoryId> {
 
   delete(requestingUserId: string): void {
     if (!this.isOwner(requestingUserId)) {
-      throw new Error("Only the memory owner can delete it");
+      throw new UnauthorizedMemoryAccessException(this.id.value, requestingUserId);
     }
     this.record(
       new MemoryDeletedEvent({
