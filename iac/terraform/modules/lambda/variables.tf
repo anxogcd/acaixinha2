@@ -36,5 +36,5 @@ variable "cognito_client_id" {
 variable "source_dir" {
   description = "Path to built Lambda code"
   type        = string
-  default     = "../../../apps/api/dist"
+  default     = "../../apps/api/dist"
 }
