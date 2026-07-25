@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { User } from "../models/User";
-import { UserId } from "../value-objects/UserId";
-import { UserName } from "../value-objects/UserName";
-import { UserUsername } from "../value-objects/UserUsername";
-import { UserCreatedEvent } from "../events/UserCreatedEvent";
-import { UserProfileUpdatedEvent } from "../events/UserProfileUpdatedEvent";
-import { UserMemorySharedEvent } from "../events/UserMemorySharedEvent";
-import { UserNotFoundException } from "../exceptions/UserNotFoundException";
-import { UserAlreadyExistsException } from "../exceptions/UserAlreadyExistsException";
-import { InvalidUsernameException } from "../exceptions/InvalidUsernameException";
+import { User } from "../models/User.js";
+import { UserId } from "../value-objects/UserId.js";
+import { UserName } from "../value-objects/UserName.js";
+import { UserUsername } from "../value-objects/UserUsername.js";
+import { UserCreatedEvent } from "../events/UserCreatedEvent.js";
+import { UserProfileUpdatedEvent } from "../events/UserProfileUpdatedEvent.js";
+import { UserMemorySharedEvent } from "../events/UserMemorySharedEvent.js";
+import { UserNotFoundException } from "../exceptions/UserNotFoundException.js";
+import { UserAlreadyExistsException } from "../exceptions/UserAlreadyExistsException.js";
+import { InvalidUsernameException } from "../exceptions/InvalidUsernameException.js";
 
 describe("User aggregate", () => {
   const id = new UserId("550e8400-e29b-41d4-a716-446655440000");

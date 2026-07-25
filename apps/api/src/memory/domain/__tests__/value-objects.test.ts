@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { MemoryId } from "../value-objects/MemoryId";
-import { MemoryTitle } from "../value-objects/MemoryTitle";
-import { MemoryDescription } from "../value-objects/MemoryDescription";
-import { LocationName } from "../value-objects/LocationName";
-import { Coordinates } from "../value-objects/Coordinates";
-import { Tag } from "../value-objects/Tag";
-import { AttachmentId } from "../value-objects/AttachmentId";
-import { S3Key } from "../value-objects/S3Key";
-import { MimeType } from "../value-objects/MimeType";
+import { MemoryId } from "../value-objects/MemoryId.js";
+import { MemoryTitle } from "../value-objects/MemoryTitle.js";
+import { MemoryDescription } from "../value-objects/MemoryDescription.js";
+import { LocationName } from "../value-objects/LocationName.js";
+import { Coordinates } from "../value-objects/Coordinates.js";
+import { Tag } from "../value-objects/Tag.js";
+import { AttachmentId } from "../value-objects/AttachmentId.js";
+import { S3Key } from "../value-objects/S3Key.js";
+import { MimeType } from "../value-objects/MimeType.js";
 
 describe("MemoryId", () => {
   const validUuid = "660e8400-e29b-41d4-a716-446655440001";

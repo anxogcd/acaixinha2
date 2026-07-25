@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { MemorySharingService } from "../services/MemorySharingService";
-import { Memory } from "../models/Memory";
-import { MemoryId } from "../value-objects/MemoryId";
-import { MemoryTitle } from "../value-objects/MemoryTitle";
-import { MemoryDescription } from "../value-objects/MemoryDescription";
-import { User } from "../../../user/domain/models/User";
-import { UserId } from "../../../user/domain/value-objects/UserId";
-import { UserName } from "../../../user/domain/value-objects/UserName";
-import { UserUsername } from "../../../user/domain/value-objects/UserUsername";
+import { MemorySharingService } from "../services/MemorySharingService.js";
+import { Memory } from "../models/Memory.js";
+import { MemoryId } from "../value-objects/MemoryId.js";
+import { MemoryTitle } from "../value-objects/MemoryTitle.js";
+import { MemoryDescription } from "../value-objects/MemoryDescription.js";
+import { User } from "../../../user/domain/models/User.js";
+import { UserId } from "../../../user/domain/value-objects/UserId.js";
+import { UserName } from "../../../user/domain/value-objects/UserName.js";
+import { UserUsername } from "../../../user/domain/value-objects/UserUsername.js";
 
 const memoryId = new MemoryId("880e8400-e29b-41d4-a716-446655440003");
 const targetUserIdStr = "bb0e8400-e29b-41d4-a716-446655440002";
@@ -66,6 +66,8 @@ function makeMemory(): Memory {
     title: new MemoryTitle("Test"),
     description: new MemoryDescription("Desc"),
     memoryDate: new Date(),
+    locationName: null,
+    coordinates: null,
     ownerId: "user-1",
   });
 }

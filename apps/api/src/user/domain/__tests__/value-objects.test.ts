@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { UserId } from "../value-objects/UserId";
-import { UserName } from "../value-objects/UserName";
-import { UserUsername } from "../value-objects/UserUsername";
-import { UserDescription } from "../value-objects/UserDescription";
-import { UserAvatarUrl } from "../value-objects/UserAvatarUrl";
+import { UserId } from "../value-objects/UserId.js";
+import { UserName } from "../value-objects/UserName.js";
+import { UserUsername } from "../value-objects/UserUsername.js";
+import { UserDescription } from "../value-objects/UserDescription.js";
+import { UserAvatarUrl } from "../value-objects/UserAvatarUrl.js";
 
 describe("UserId", () => {
   const validUuid = "550e8400-e29b-41d4-a716-446655440000";

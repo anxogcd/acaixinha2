@@ -1,23 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { Memory } from "../models/Memory";
-import { MemoryId } from "../value-objects/MemoryId";
-import { MemoryTitle } from "../value-objects/MemoryTitle";
-import { MemoryDescription } from "../value-objects/MemoryDescription";
-import { Tag } from "../value-objects/Tag";
-import { Coordinates } from "../value-objects/Coordinates";
-import { Attachment } from "../models/Attachment";
-import { AttachmentId } from "../value-objects/AttachmentId";
-import { S3Key } from "../value-objects/S3Key";
-import { MimeType } from "../value-objects/MimeType";
-import { LocationName } from "../value-objects/LocationName";
-import { MemoryCreatedEvent } from "../events/MemoryCreatedEvent";
-import { MemoryUpdatedEvent } from "../events/MemoryUpdatedEvent";
-import { MemoryDeletedEvent } from "../events/MemoryDeletedEvent";
-import { MemorySharedEvent } from "../events/MemorySharedEvent";
-import { AttachmentAddedEvent } from "../events/AttachmentAddedEvent";
-import { AttachmentLimitExceededException } from "../exceptions/AttachmentLimitExceededException";
-import { UnauthorizedMemoryAccessException } from "../exceptions/UnauthorizedMemoryAccessException";
-import { MAX_ATTACHMENTS_PER_MEMORY } from "../constants/index";
+import { Memory } from "../models/Memory.js";
+import { MemoryId } from "../value-objects/MemoryId.js";
+import { MemoryTitle } from "../value-objects/MemoryTitle.js";
+import { MemoryDescription } from "../value-objects/MemoryDescription.js";
+import { Tag } from "../value-objects/Tag.js";
+import { Coordinates } from "../value-objects/Coordinates.js";
+import { Attachment } from "../models/Attachment.js";
+import { AttachmentId } from "../value-objects/AttachmentId.js";
+import { S3Key } from "../value-objects/S3Key.js";
+import { MimeType } from "../value-objects/MimeType.js";
+import { LocationName } from "../value-objects/LocationName.js";
+import { MemoryCreatedEvent } from "../events/MemoryCreatedEvent.js";
+import { MemoryUpdatedEvent } from "../events/MemoryUpdatedEvent.js";
+import { MemoryDeletedEvent } from "../events/MemoryDeletedEvent.js";
+import { MemorySharedEvent } from "../events/MemorySharedEvent.js";
+import { AttachmentAddedEvent } from "../events/AttachmentAddedEvent.js";
+import { AttachmentLimitExceededException } from "../exceptions/AttachmentLimitExceededException.js";
+import { UnauthorizedMemoryAccessException } from "../exceptions/UnauthorizedMemoryAccessException.js";
+import { MAX_ATTACHMENTS_PER_MEMORY } from "../constants/index.js";
 
 const ownerId = "user-1";
 const memoryId = new MemoryId("880e8400-e29b-41d4-a716-446655440003");
@@ -29,6 +29,8 @@ describe("Memory aggregate", () => {
       title: new MemoryTitle("Test Memory"),
       description: new MemoryDescription("A test memory"),
       memoryDate: new Date("2024-01-15"),
+      locationName: null,
+      coordinates: null,
       ownerId,
     });
 
@@ -118,7 +120,7 @@ describe("Memory aggregate", () => {
     const tag = new Tag("vacaciones");
 
     memory.addTag(tag);
-    expect(memory.tags.some((t) => t.equals(tag))).toBe(true);
+    expect(memory.tags.some((t: Tag) => t.equals(tag))).toBe(true);
     expect(memory.tags.length).toBe(1);
 
     memory.removeTag(tag);
@@ -264,6 +266,8 @@ function createMemory(): Memory {
     title: new MemoryTitle("Test Memory"),
     description: new MemoryDescription("A test memory"),
     memoryDate: new Date("2024-01-15"),
+    locationName: null,
+    coordinates: null,
     ownerId,
   });
 }
